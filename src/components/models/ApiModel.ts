@@ -7,10 +7,18 @@ export class ApiModel {
     }
 
     getProducts(): Promise<IProduct[]> {
-        return this._api.get<IGetProducts>('/product/').then((res: IGetProducts) => res.items)
+        try {
+            return this._api.get<{ items: IProduct[]; total: number }>('/product/').then((res: IGetProducts) => res.items)
+        } catch (error) {
+            console.log("Ошибка при получении продуктов " + error)
+        }
     }
 
     postProducts(data: IData): Promise<TOrder> {
-        return this._api.post<TOrder>('/order/', data)
+        try {
+            return this._api.post<TOrder>('/order/', data)
+        } catch (error) {
+            console.log("Ошибка при оформлении заказа " + error)
+        }
     }
 }
