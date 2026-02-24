@@ -28,6 +28,12 @@ export interface IGetProducts {
   total: number;
 }
 
-export interface IData extends IBuyer {
+export interface IData {
   id: string[];
+  payment: TPayment;
+  email: string;
+  phone: string;
+  address: string;
+  total: number;
+  items: string[] //Массив с id товаров
 }

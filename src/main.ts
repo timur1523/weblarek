@@ -37,7 +37,10 @@ apiModel.getProducts().then((products) => {
     console.log("Получили все данные покупателя " + buyer.getData());
     buyer.clearData();//очистили данные покупателя
     console.log("Снова получили все данные покупателя " + buyer.getData());
-})
+}).catch (error => {
+    console.log("Произошла ошибка, попробуйте позже", error)
+});
+
 
 
 
