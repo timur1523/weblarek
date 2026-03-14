@@ -37,3 +37,8 @@ export interface IData {
   total: number;
   items: string[] //Массив с id товаров
 }
+
+export interface IPage {
+  counter: number;
+  gallery: HTMLElement[];
+}

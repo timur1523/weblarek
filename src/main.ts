@@ -1,18 +1,23 @@
 import { Api } from './components/base/Api';
+import { EventEmitter } from './components/base/Events';
 import { ApiModel } from './components/models/ApiModel';
 import { BasketModel } from './components/models/BasketModel';
 import { BuyerModel } from './components/models/BuyerModel';
 import { ProductsModel } from './components/models/ProductsModel';
+import { Page } from './components/view/page';
 import './scss/styles.scss';
 import { API_URL } from './utils/constants';
 
-const product = new ProductsModel()
-const basket = new BasketModel()
-const buyer = new BuyerModel()
+const events = new EventEmitter()
+const product = new ProductsModel(events)
+const basket = new BasketModel(events)
+const buyer = new BuyerModel(events)
 
 const baseApi = new Api(API_URL)
 const apiModel = new ApiModel(baseApi)
-apiModel.getProducts().then((products) => {
+const gallery = document.querySelector(".gallery") as HTMLElement
+const page = new Page(events, gallery)
+/*apiModel.getProducts().then((products) => {
     console.log("Методы класса ProductsModel");
     product.setItems(products);// сохраненяем массив товаров, полученного с сервера
     product.setPreview(products[5]);// устанавливаем определенный товар для подробного просмотра
@@ -39,7 +44,7 @@ apiModel.getProducts().then((products) => {
     console.log("Снова получили все данные покупателя " + buyer.getData());
 }).catch (error => {
     console.log("Произошла ошибка, попробуйте позже", error)
-});
+});*/
 
 
 

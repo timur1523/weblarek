@@ -18,6 +18,10 @@ export abstract class Component<T> {
         }
     }
 
+    setText(element: HTMLElement, value: string) {
+        element.textContent = value;
+    }
+
     // Вернуть корневой DOM-элемент
     render(data?: Partial<T>): HTMLElement {
         Object.assign(this as object, data ?? {});
