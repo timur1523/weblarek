@@ -15,7 +15,7 @@ export class Basket extends Component<HTMLElement> {
         this.orderButton = ensureElement<HTMLButtonElement>(".basket__button", container);
 
         this.orderButton.addEventListener("click", () => {
-            this.events.emit('basket:opened');
+            this.events.emit('order:start');
         })
     }
 
@@ -25,5 +25,9 @@ export class Basket extends Component<HTMLElement> {
 
     setTotalPrice(total: number) {
         this.setText(this.totalPrice, `${total} синапсов`);
+    }
+
+    setButtonDisabled(disabled: boolean) {
+        this.orderButton.disabled = disabled;
     }
 }

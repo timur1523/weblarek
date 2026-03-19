@@ -5,7 +5,7 @@ export class ProductsModel {
     private _items: IProduct[] = [];
     private _preview: IProduct | null = null;
 
-    constructor(private events: IEvents){};
+    constructor(private events: IEvents) { };
 
     setItems(items: IProduct[]): void {
         this._items = items;

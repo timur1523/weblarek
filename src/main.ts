@@ -4,50 +4,162 @@ import { ApiModel } from './components/models/ApiModel';
 import { BasketModel } from './components/models/BasketModel';
 import { BuyerModel } from './components/models/BuyerModel';
 import { ProductsModel } from './components/models/ProductsModel';
-import { Page } from './components/view/page';
+import { Basket } from './components/view/Basket';
+import { CardBasket } from './components/view/Cards/CardBasket';
+import { CardCatalog } from './components/view/Cards/CardCatalog';
+import { CardPreview } from './components/view/Cards/CardPreview';
+import { ContactsForm } from './components/view/Forms/ContactsForm';
+import { OrderForm } from './components/view/Forms/OrderForm';
+import { Modal } from './components/view/Modal';
+import { Page } from './components/view/Page';
+import { Success } from './components/view/Success';
 import './scss/styles.scss';
-import { API_URL } from './utils/constants';
+import { ICardSelectEvent, InputOrder, IPayment, IProduct } from './types';
+import { API_URL, CDN_URL } from './utils/constants';
+import { cloneTemplate } from './utils/utils';
 
-const events = new EventEmitter()
-const product = new ProductsModel(events)
-const basket = new BasketModel(events)
-const buyer = new BuyerModel(events)
+const events = new EventEmitter();
+const product = new ProductsModel(events);
+const basketModel = new BasketModel(events);
+const buyer = new BuyerModel(events);
 
-const baseApi = new Api(API_URL)
-const apiModel = new ApiModel(baseApi)
-const gallery = document.querySelector(".gallery") as HTMLElement
-const page = new Page(events, gallery)
-/*apiModel.getProducts().then((products) => {
-    console.log("Методы класса ProductsModel");
-    product.setItems(products);// сохраненяем массив товаров, полученного с сервера
-    product.setPreview(products[5]);// устанавливаем определенный товар для подробного просмотра
-    console.log("Возвращаем массив всех товаров " + product.getItems());
-    console.log("Находим и возвращаем товар по его id " + product.getItem(products[2].id));
-    console.log("Получили товар для подробного отображения " + product.getPreview());
-    console.log("Методы класса BasketModel");
-    basket.addItem(products[0]);//добавляем товар в массив корзины;
-    basket.addItem(products[1]);
-    basket.addItem(products[2]);
-    console.log("Получили массив товаров, которые находятся в корзине " + basket.getItems());
-    console.log("Получили стоимость всех товаров в корзине " + basket.getTotalPrice());
-    console.log("Узнали количество товаров в корзине " + basket.getTotalCount());
-    console.log("Проверили наличие товара в корзине по его id " + basket.hasItem(products[2].id));
-    basket.deleteItem(products[2].id);//удаляем товар, полученный в параметре из массива корзины
-    console.log("Получили массив товаров, которые находятся в корзине " + basket.getItems());
-    basket.clearBasket();// очистили корзину
-    console.log("Снова получили массив товаров, которые находятся в корзине " + basket.getItems());
-    console.log("Методы класса BuyerModel");
-    buyer.setBuyerData({ payment: 'cash', address: '' })//сохраненяем данные в модели
-    console.log("Валидация данных " + buyer.isValidData());
-    console.log("Получили все данные покупателя " + buyer.getData());
-    buyer.clearData();//очистили данные покупателя
-    console.log("Снова получили все данные покупателя " + buyer.getData());
-}).catch (error => {
-    console.log("Произошла ошибка, попробуйте позже", error)
-});*/
+const baseApi = new Api(API_URL);
+const apiModel = new ApiModel(baseApi);
+const modalContainer = document.getElementById("modal-container") as HTMLElement;
 
+//Получаем шаблоны
+const successTemplate = document.getElementById("success") as HTMLTemplateElement;
+const cardCatalogTemplate = document.getElementById("card-catalog") as HTMLTemplateElement;
+const cardPreviewTemplate = document.getElementById("card-preview") as HTMLTemplateElement;
+const cardBasketTemplate = document.getElementById("card-basket") as HTMLTemplateElement;
+const basketTemplate = document.getElementById("basket") as HTMLTemplateElement;
+const orderTemplate = document.getElementById("order") as HTMLTemplateElement;
+const contactsTemplate = document.getElementById("contacts") as HTMLTemplateElement;
 
+const modal = new Modal(events, modalContainer);
+const basket = new Basket(events, cloneTemplate(basketTemplate));
+const page = new Page(events, document.querySelector(".page") as HTMLElement);
+let orderForm: OrderForm;
+let contactsForm: ContactsForm;
 
+apiModel.getProducts().then((products) => {
+    product.setItems(products);
+}).catch(error => {
+    console.log(error);
+});
 
-console.log(baseApi);
-console.log(API_URL);
+events.on('products:changed', () => {
+    const products = product.getItems();
+    const cardsElements = products.map(product => {
+        const el = cloneTemplate(cardCatalogTemplate);
+        const card = new CardCatalog(events, el);
+        return card.render({ ...product, image: CDN_URL + product.image })
+    })
+    page.setGallery(cardsElements);
+});
+
+events.on('card:select', (event: ICardSelectEvent) => {
+    const item = product.getItem(event.id);
+    if (item) {
+        product.setPreview(item);
+    }
+});
+
+events.on('preview:changed', (item: IProduct) => {
+    const card = new CardPreview(events, cloneTemplate(cardPreviewTemplate));
+    modal.setContent(card.render({ ...item, image: CDN_URL + item.image, inBasket: basketModel.hasItem(item.id) }));
+    modal.modalOpen();
+});
+
+events.on("button:basket-changed", (event: ICardSelectEvent) => {
+    const item = product.getItem(event.id);
+    if (!item) return;
+    basketModel.hasItem(event.id) ? basketModel.deleteItem(event.id) : basketModel.addItem(item);
+    modal.modalClose();
+});
+
+events.on('basket:changed', () => {
+    const items = basketModel.getItems().map((item, index) => {
+        const el = cloneTemplate(cardBasketTemplate);
+        const card = new CardBasket(events, el);
+        return card.render({ ...item, index: index + 1 })
+    })
+    const basketCount = basketModel.getTotalCount()
+    basket.setItems(items);
+    basket.setTotalPrice(basketModel.getTotalPrice());
+    page.setCounter(basketCount);
+    basket.setButtonDisabled(!basketCount)
+});
+
+events.on('basket:open', () => {
+    modal.setContent(basket.render());
+    modal.modalOpen();
+});
+
+events.on('basket:remove', (event: ICardSelectEvent) => {
+    basketModel.deleteItem(event.id);
+});
+
+events.on('order:start', () => {
+    orderForm = new OrderForm(events, cloneTemplate(orderTemplate));
+    modal.setContent(orderForm.render())
+    modal.modalOpen();
+});
+
+events.on('order:payment-changed', (event: IPayment) => {
+    buyer.setBuyerData({ payment: event.payment });
+    const { payment, address } = buyer.isValidData();
+    orderForm.setCurrentPayment(event.payment);
+    orderForm.setError(address);
+    orderForm.setValid(!address && !payment);
+});
+
+events.on('order:change', (event: InputOrder) => {
+    const { field, value } = event;
+    buyer.setBuyerData({ [field]: value });
+    const { payment, address } = buyer.isValidData();
+    orderForm.setError(payment ?? address);
+    orderForm.setValid(!address && !payment);
+});
+
+events.on('order:submit', () => {
+    const { payment, address } = buyer.isValidData();
+    if (payment || address) return
+    contactsForm = new ContactsForm(events, cloneTemplate(contactsTemplate));
+    modal.setContent(contactsForm.render());
+});
+
+events.on('contacts:change', (event: InputOrder) => {
+    const { field, value } = event;
+    buyer.setBuyerData({ [field]: value });
+    const { phone, email } = buyer.isValidData();
+    contactsForm.setError(phone ?? email);
+    contactsForm.setValid(!email && !phone);
+});
+
+events.on('contacts:submit', () => {
+    const { phone, email } = buyer.isValidData();
+    if (phone || email) return;
+    const data = buyer.getData();
+    const orderData = {
+        ...data,
+        items: basketModel.getItems().map(item => item.id),
+        total: basketModel.getTotalPrice()
+    }
+
+    apiModel.postProducts(orderData).then(() => {
+        const success = new Success(events, cloneTemplate(successTemplate));
+        success.setDescription(basketModel.getTotalPrice());
+        basketModel.clearBasket();
+        buyer.clearData();
+        modal.setContent(success.render());
+    })
+});
+
+events.on("modal:close", () => {
+    buyer.clearData();
+});
+
+events.on("success:close", () => {
+    modal.modalClose();
+});

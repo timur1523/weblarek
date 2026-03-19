@@ -14,8 +14,8 @@ export class Modal extends Component<HTMLElement> {
             this.modalClose()
         })
 
-        this.container.addEventListener('click', () => {
-            this.modalClose()
+        this.container.addEventListener('click', (event) => {
+            if (event.target === this.container) this.modalClose()
         })
 
 

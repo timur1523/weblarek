@@ -6,7 +6,7 @@ export class Form extends Component<HTMLFormElement> {
     private submit: HTMLButtonElement;
     private error: HTMLElement;
 
-    constructor(private events: IEvents, private container: HTMLFormElement) {
+    constructor(protected events: IEvents, protected container: HTMLFormElement) {
         super(container);
         this.submit = ensureElement<HTMLButtonElement>('button[type="submit"]', container);
         this.error = ensureElement<HTMLElement>(".form__errors", container);
@@ -22,7 +22,7 @@ export class Form extends Component<HTMLFormElement> {
             const field = target.name;
             const value = target.value;
 
-            this.events.emit(`${container.name}:change`, {field, value});
+            this.events.emit(`${container.name}:change`, { field, value });
         })
     }
 
@@ -34,16 +34,11 @@ export class Form extends Component<HTMLFormElement> {
         this.container.reset();
     }
 
-    render(state: Partial<T> & {valid: boolean; error: string}): HTMLElement {
-        const {error, valid, ...inputs} = state;
-        if (valid) {
-            this.submit.setAttribute("disabled", 'disabled');
+    setValid(valid: boolean) {
+        if (!valid) {
+            this.submit.disabled = true;
         } else {
-            this.submit.removeAttribute("disabled");
+            this.submit.disabled = false;
         }
-
-        this.error = error;
-
-        return this.container
     }
 }

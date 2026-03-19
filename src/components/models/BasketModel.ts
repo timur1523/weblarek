@@ -4,7 +4,7 @@ import { IEvents } from "../base/Events";
 export class BasketModel {
     private _items: IProduct[] = [];
 
-    constructor(private events:IEvents){}
+    constructor(private events: IEvents) { }
 
     getItems(): IProduct[] {
         return this._items

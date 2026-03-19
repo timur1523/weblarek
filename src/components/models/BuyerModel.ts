@@ -8,7 +8,7 @@ export class BuyerModel {
         phone: "",
         address: "",
     }
-    constructor(private events: IEvents){}
+    constructor(private events: IEvents) { }
 
     setBuyerData(data: Partial<IBuyer>): void {
         this._data = { ...this._data, ...data };
@@ -29,21 +29,29 @@ export class BuyerModel {
         this.events.emit('buyer:changed', this._data);
     }
 
-    isValidData(): {[key: string]: string} {
-        const errors: {[key: string]: string} = {};
+    isValidData(): { [key: string]: string } {
+        const errors: { [key: string]: string } = {};
         if (!this._data.payment) {
             errors.payment = "Выберите способ оплаты"
-        } 
+        }
         if (!this._data.email) {
             errors.email = "Укажите ваш почтовый ящик"
+        } else if (!this.validateEmail(this._data.email)) {
+            errors.email = "Неверный формат почты"
         }
-        if(!this._data.phone) {
+        if (!this._data.phone) {
             errors.phone = "Укажите ваш номер телефона"
+        } else if (this._data.phone.length !== 12 || !this._data.phone.startsWith("+7") || isNaN(+this._data.phone.replace("+", ""))) {
+            errors.phone = "Номер телефона указан неверно"
         }
-        if(!this._data.address) {
+        if (!this._data.address) {
             errors.address = "Укажите ваш адрес проживания"
         }
         return errors
     }
 
+    protected validateEmail(email: string): boolean {
+        const reg = /^[a-zA-Z0-9._%+-]+@[a-zA-Z.]+\.[a-zA-Z]{2,}$/;
+        return reg.test(email);
+    }
 }
