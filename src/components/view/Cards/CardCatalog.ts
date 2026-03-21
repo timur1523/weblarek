@@ -6,16 +6,16 @@ import { Card } from "./Card";
 export class CardCatalog extends Card {
     protected image: HTMLImageElement;
 
-    constructor (private events: IEvents, container: HTMLElement) {
+    constructor(private events: IEvents, container: HTMLElement) {
         super(container);
         this.image = ensureElement<HTMLImageElement>(".card__image", container);
         container.addEventListener("click", () => {
-            this.events.emit("card:select", {id: this.container.dataset.id});
+            this.events.emit("card:select", { id: this.container.dataset.id });
         })
     }
 
-    render(data: IProduct): HTMLElement {
-        super.render(data)
+    render(data?: IProduct): HTMLElement {
+        if (!data) return this.container;
         this.container.dataset.id = data.id;
         this.setTitle(data.title);
         this.updateImage(data.image, this.image);

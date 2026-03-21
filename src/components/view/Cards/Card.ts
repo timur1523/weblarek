@@ -19,6 +19,6 @@ export class Card extends Component<IProduct> {
         this.setImage(imgContainer, src, this.title.textContent)
     }
     setPrice(value: number | null) {
-        this.setText(this.price, value? `${value} синапсов` : "Бесценно")
+        this.setText(this.price, value ? `${value} синапсов` : "Бесценно")
     }
 }

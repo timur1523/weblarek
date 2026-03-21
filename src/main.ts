@@ -14,7 +14,7 @@ import { Modal } from './components/view/Modal';
 import { Page } from './components/view/Page';
 import { Success } from './components/view/Success';
 import './scss/styles.scss';
-import { ICardSelectEvent, InputOrder, IPayment, IProduct } from './types';
+import { IBuyer, ICardSelectEvent, InputOrder, IPayment, IProduct } from './types';
 import { API_URL, CDN_URL } from './utils/constants';
 import { cloneTemplate } from './utils/utils';
 
@@ -39,8 +39,8 @@ const contactsTemplate = document.getElementById("contacts") as HTMLTemplateElem
 const modal = new Modal(events, modalContainer);
 const basket = new Basket(events, cloneTemplate(basketTemplate));
 const page = new Page(events, document.querySelector(".page") as HTMLElement);
-let orderForm: OrderForm;
-let contactsForm: ContactsForm;
+const orderForm = new OrderForm(events, cloneTemplate(orderTemplate));
+const contactsForm = new ContactsForm(events, cloneTemplate(contactsTemplate));
 
 apiModel.getProducts().then((products) => {
     product.setItems(products);
@@ -67,6 +67,12 @@ events.on('card:select', (event: ICardSelectEvent) => {
 
 events.on('preview:changed', (item: IProduct) => {
     const card = new CardPreview(events, cloneTemplate(cardPreviewTemplate));
+    if (item.price) {
+        card.setButton(basketModel.hasItem(item.id) ? "Удалить из корзины" : "Купить")
+    } else {
+        card.setButton("Недоступно");
+        card.setButtonDisabled(true);
+    }
     modal.setContent(card.render({ ...item, image: CDN_URL + item.image, inBasket: basketModel.hasItem(item.id) }));
     modal.modalOpen();
 });
@@ -101,40 +107,28 @@ events.on('basket:remove', (event: ICardSelectEvent) => {
 });
 
 events.on('order:start', () => {
-    orderForm = new OrderForm(events, cloneTemplate(orderTemplate));
     modal.setContent(orderForm.render())
     modal.modalOpen();
 });
 
 events.on('order:payment-changed', (event: IPayment) => {
     buyer.setBuyerData({ payment: event.payment });
-    const { payment, address } = buyer.isValidData();
-    orderForm.setCurrentPayment(event.payment);
-    orderForm.setError(address);
-    orderForm.setValid(!address && !payment);
 });
 
 events.on('order:change', (event: InputOrder) => {
     const { field, value } = event;
     buyer.setBuyerData({ [field]: value });
-    const { payment, address } = buyer.isValidData();
-    orderForm.setError(payment ?? address);
-    orderForm.setValid(!address && !payment);
 });
 
 events.on('order:submit', () => {
     const { payment, address } = buyer.isValidData();
     if (payment || address) return
-    contactsForm = new ContactsForm(events, cloneTemplate(contactsTemplate));
     modal.setContent(contactsForm.render());
 });
 
 events.on('contacts:change', (event: InputOrder) => {
     const { field, value } = event;
     buyer.setBuyerData({ [field]: value });
-    const { phone, email } = buyer.isValidData();
-    contactsForm.setError(phone ?? email);
-    contactsForm.setValid(!email && !phone);
 });
 
 events.on('contacts:submit', () => {
@@ -156,10 +150,19 @@ events.on('contacts:submit', () => {
     })
 });
 
-events.on("modal:close", () => {
-    buyer.clearData();
-});
-
 events.on("success:close", () => {
     modal.modalClose();
 });
+
+events.on('buyer:changed', (event: IBuyer) => {
+    console.log(event);
+    const { payment, address, email, phone } = buyer.isValidData();
+    orderForm.setError(payment ?? address);
+    orderForm.setValid(!payment && !address);
+    orderForm.setCurrentPayment(event.payment);
+    orderForm.setAddress(event.address);
+    contactsForm.setError(phone ?? email);
+    contactsForm.setValid(!phone && !email);
+    contactsForm.setEmail(event.email);
+    contactsForm.setPhone(event.phone);
+})

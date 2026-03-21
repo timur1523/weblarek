@@ -13,12 +13,12 @@ export class CardBasket extends Card {
         this.deleteButton = ensureElement<HTMLButtonElement>(".basket__item-delete", container);
 
         this.deleteButton.addEventListener("click", () => {
-            this.events.emit("basket:remove", {id: this.container.dataset.id});
+            this.events.emit("basket:remove", { id: this.container.dataset.id });
         })
     }
 
-    render(data: IProduct & {index: number}): HTMLElement {
-        super.render(data);
+    render(data?: IProduct & { index: number }): HTMLElement {
+        if (!data) return this.container;
         this.container.dataset.id = data.id;
         this.setText(this.title, data.title);
         this.setText(this.price, `${data.price} синапсов`);
