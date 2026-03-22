@@ -7,6 +7,7 @@ export class CardPreview extends Card {
     private button: HTMLButtonElement;
     private description: HTMLElement;
     protected image: HTMLImageElement;
+    private category: HTMLElement;
 
 
     constructor(private events: IEvents, container: HTMLElement) {
@@ -14,6 +15,7 @@ export class CardPreview extends Card {
         this.image = ensureElement<HTMLImageElement>(".card__image", container);
         this.button = ensureElement<HTMLButtonElement>(".card__button", container);
         this.description = ensureElement<HTMLButtonElement>(".card__text", container);
+        this.category = ensureElement(".card__category", container);
 
 
         this.button.addEventListener("click", () => {
@@ -30,6 +32,7 @@ export class CardPreview extends Card {
         this.container.dataset.id = data.id;
         this.setTitle(data.title);
         this.setPrice(data.price);
+        this.setCategory(this.category, data.category);
         this.setDescription(data.description);
         this.updateImage(data.image, this.image);
         return this.container
